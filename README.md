@@ -21,10 +21,14 @@ provided will be available 15 days after the time of staking.
 
 ```
 
+```
+
 The dapp contain function for users and liquidity providers alike
 but the staking pool represented in the frontend is for liquidity
 providers with functionalities to stake, unstake and withdraw yield.
 Know pool balance and yield is shown as well.
+
+```
 
 ```
 
@@ -68,4 +72,9 @@ npm run build
 2. Create a wallet.
 3. Go to [https://celo.org/developers/faucet](https://celo.org/developers/faucet) and get tokens for the alfajores testnet.
 4. Switch to the alfajores testnet in the CeloExtensionWallet.
+
+```
+
+```
+
 ```

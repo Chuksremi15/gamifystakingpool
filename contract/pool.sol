@@ -2,6 +2,8 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 interface IERC20Token {
     function transfer(address, uint256) external returns (bool);
 
@@ -27,79 +29,6 @@ interface IERC20Token {
     );
 }
 
-contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
-
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-}
-
-contract Ownable is Context {
-    address private _owner;
-
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-    constructor() {
-        _transferOwnership(_msgSender());
-    }
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view virtual returns (address) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(owner() == _msgSender(), "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        _transferOwnership(address(0));
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(
-            newOwner != address(0),
-            "Ownable: new owner is the zero address"
-        );
-        _transferOwnership(newOwner);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Internal function without access restriction.
-     */
-    function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
-    }
-}
 
 contract Pool is Ownable {
     // userAddress => stakingBalance
@@ -112,33 +41,32 @@ contract Pool is Ownable {
     mapping(address => uint256) public dueTime;
     // userAddress => yields
     mapping(address => uint256) public yieldBalance;
-    // userAddress => betting balance
-    mapping(address => uint256) public bettingBalance;
-    // userAddress => isBetting boolean
-    mapping(address => bool) public isBetting;
 
     uint256 public totalPoolStakedBalance;
 
-    // betters userAddress Array
-    address[] public betters;
     // stakers userAddress Array
     address[] public stakers;
 
     address internal cUsdTokenAddress =
         0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1;
 
+    uint public transactionFee = 0.002 ether;
+
+    uint public feesCollected;
+
     event Stake(address indexed from, uint256 amount);
     event Unstake(address indexed from, uint256 amount);
     event YieldWithdraw(address indexed to, uint256 amount);
-    event FundAccount(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
-    event UpdateWinning(address indexed to, uint256 amount);
-    event UpdateBalance(address indexed to, uint256 amount);
-    event PlayBet(address indexed to, uint256 amount);
 
-    function stake(uint256 _amount) external {
+    /**
+     * @dev allow users to stake CUSD tokens they own to receive rewards
+     * @param _amount the amount sender wishes to stake. Must be at least 0.01 CUSD
+     * @notice staking period is 2 minutes
+     */
+    function stake(uint256 _amount) external payable {
         require(
-            _amount > 0 &&
+            _amount >= 0.01 ether &&
                 IERC20Token(cUsdTokenAddress).balanceOf(msg.sender) >= _amount,
             "You cannot stake zero tokens"
         );
@@ -148,39 +76,50 @@ contract Pool is Ownable {
             address(this),
             _amount
         );
-        totalPoolStakedBalance += _amount;
-        stakingBalance[msg.sender] += _amount;
-        dueTime[msg.sender] = block.timestamp + 15 days;
+        uint amountToAddToBalance = _amount  - transactionFee;
+        feesCollected += transactionFee;
+
+        uint newTotalPoolStakedBalance = totalPoolStakedBalance + amountToAddToBalance; 
+        totalPoolStakedBalance = newTotalPoolStakedBalance;
+
+        uint newStakingBalance = stakingBalance[msg.sender] + amountToAddToBalance;
+        stakingBalance[msg.sender] = newStakingBalance;
+
+        dueTime[msg.sender] = block.timestamp + 2 minutes;
         isStaking[msg.sender] = true;
         if (hasStaked[msg.sender] == false) {
             stakers.push(msg.sender);
+            hasStaked[msg.sender] = true;
         }
-        hasStaked[msg.sender] = true;
         emit Stake(msg.sender, _amount);
     }
 
-    function distributeTransactionFee(uint256 _amount) private {
-        require(_amount > 0, "You cannot add zero tokens");
-
-        for (uint256 i = 0; i < stakers.length; i++) {
+    // function to distribute yield rewards to stakers
+    function distributeTransactionFee(uint256 _amount) public {
+        uint stakersLength = stakers.length;
+        for (uint256 i = 0; i < stakersLength; i++) {
             if (isStaking[stakers[i]]) {
-                uint256 balance = stakingBalance[stakers[i]];
-                uint256 poolRatio = balance * _amount;
-                uint256 yield = poolRatio / totalPoolStakedBalance;
+                // basis points are used to increase accuracy for precision
+                // pool ratio is the percentage representing the amount user has staked over the total staked amount
+                // based off this percentage, users are rewarded this percentage from the fees collected
+                uint256 poolRatio = (stakingBalance[stakers[i]] * 10000) / totalPoolStakedBalance;
+                uint256 yield = (_amount * poolRatio) / 10000;
                 yieldBalance[stakers[i]] += yield;
             }
         }
     }
 
-    function unstake(uint256 _amount) external {
+    /**
+        * @dev allow users to unstake a certain amount they had previously staked
+        * @notice staking period needs to be over
+     */
+    function unstake(uint256 _amount) external payable {
         require(block.timestamp > dueTime[msg.sender], "unstake not yet due");
 
         require(
             _amount > 0 && stakingBalance[msg.sender] >= _amount,
             "You cannot unstake zero tokens"
         );
-
-        dueTime[msg.sender] = block.timestamp;
         uint256 balTransfer = _amount;
         _amount = 0;
         stakingBalance[msg.sender] -= balTransfer;
@@ -192,7 +131,10 @@ contract Pool is Ownable {
         emit Unstake(msg.sender, balTransfer);
     }
 
-    function withdrawYield() external {
+    /**
+        * @dev allow users to withdraw their yield rewards
+     */
+    function withdrawYield() public payable {
         require(
             yieldBalance[msg.sender] > 0 && hasStaked[msg.sender],
             "You cannot withdraw zero tokens"
@@ -204,52 +146,22 @@ contract Pool is Ownable {
         emit YieldWithdraw(msg.sender, balance);
     }
 
-    function fundAccount(uint256 _amount) external {
-        require(
-            _amount > 0 &&
-                IERC20Token(cUsdTokenAddress).balanceOf(msg.sender) >= _amount,
-            "You cannot fund zero tokens"
-        );
 
-        uint256 balTransfer = _amount;
-        _amount = 0;
-
-        IERC20Token(cUsdTokenAddress).transferFrom(
-            msg.sender,
-            address(this),
-            balTransfer
-        );
-
-        bettingBalance[msg.sender] += balTransfer;
-        isBetting[msg.sender] = true;
-        betters.push(msg.sender);
-        emit FundAccount(msg.sender, balTransfer);
-    }
-
-    function calculateTransactionFee(uint256 _amount)
-        public
-        pure
-        returns (uint256)
-    {
-        //get transaction fee
-        uint256 fraction = _amount * 3;
-        return fraction / 1000;
-    }
-
-    function withdraw(uint256 _amount, address _userAddress)
-        external
+    /**
+        * @dev allow the owner to distribute the feesCollected amount to stakers and also to take his percentage
+     */
+    function withdraw(address _userAddress)
+        public payable
         onlyOwner
     {
-        require(_amount > 0, "You cannot claim zero tokens");
+        require(feesCollected >= 0.1 ether, "You cannot claim zero tokens");
+        require(_userAddress != address(0), "Address zero is not a valid receiver address");
 
-        uint256 balWithdraw = _amount;
-        _amount = 0;
-
-        uint256 transactionFee;
-        (transactionFee) = calculateTransactionFee(balWithdraw);
-        uint256 withdrawAmount = balWithdraw - transactionFee;
-
-        distributeTransactionFee(transactionFee);
+        // basis points are used to increase accuracy for precision
+        // 10% of the fees collected goes to the owner
+        uint256 withdrawAmount = (feesCollected * 1000) / 10000;
+        distributeTransactionFee(feesCollected - withdrawAmount);
+        feesCollected = 0;
 
         IERC20Token(cUsdTokenAddress).transfer(_userAddress, withdrawAmount);
 

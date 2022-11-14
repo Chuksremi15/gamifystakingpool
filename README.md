@@ -1,5 +1,7 @@
 # Gamifystakingpool
 
+[link to dapp staking page](https://chuksremi15.github.io/gamifystakingpool/)
+
 ```
 
 This is a staking dapp with functionalities for liquidity providers to provide liquidity

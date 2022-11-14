@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Game staking pool</title>
+
+    <style>
+      :root {
+        --bs-font-sans-serif: "DM Sans", sans-serif;
+      }
+
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      /* Firefox */
+      input[type="number"] {
+        -moz-appearance: textfield;
+        font-size: 25px;
+      }
+
+      input {
+        text-align: center;
+      }
+
+      ::-webkit-input-placeholder {
+        text-align: center;
+        font-size: 25px;
+      }
+
+      :-moz-placeholder {
+        text-align: center;
+        font-size: 25px;
+      }
+
+      @media (min-width: 576px) {
+        .card {
+          border: 0;
+          box-shadow: rgb(0 0 0 / 5%) 0px 10px 20px;
+          border-radius: 10px;
+        }
+
+        .card-img-top {
+          width: 100%;
+          height: 20vw;
+          object-fit: cover;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-[#221b47] h-screen overflow-scroll">
+      <!-- navbar -->
+      <div class="flex flex-row z-30 px-4 md:px-8 py-4 w-full bg-[#181235]">
+        <div class="flex-none">
+          <h3 class="text-white">Gamify staking pool</h3>
+        </div>
+        <div class="ml-auto flex gap-3 md:gap-5">
+          <div
+            class="bg-blueDark text-center text-white border border-borderGray px-3 md:px-5 py-1 rounded-lg text-sm cursor-pointer"
+            id="balance"
+          ></div>
+        </div>
+      </div>
+
+      <div
+        class="container hidden alert mx-auto max-w-3xl flex items-center bg-blue-500 text-white text-sm font-bold px-4 py-3"
+        id="notification"
+      >
+        <svg
+          class="fill-current w-4 h-4 mr-2"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+        >
+          <path
+            d="M12.432 0c1.34 0 2.01.912 2.01 1.957 0 1.305-1.164 2.512-2.679 2.512-1.269 0-2.009-.75-1.974-1.99C9.789 1.436 10.67 0 12.432 0zM8.309 20c-1.058 0-1.833-.652-1.093-3.524l1.214-5.092c.211-.814.246-1.141 0-1.141-.317 0-1.689.562-2.502 1.117l-.528-.88c2.572-2.186 5.531-3.467 6.801-3.467 1.057 0 1.233 1.273.705 3.23l-1.391 5.352c-.246.945-.141 1.271.106 1.271.317 0 1.357-.392 2.379-1.207l.6.814C12.098 19.02 9.365 20 8.309 20z"
+          />
+        </svg>
+      </div>
+
+      <div class="mt-5">
+        <h1 class="text-xl text-white text-center my-5 tracking-wide uppercase">
+          Staking Pool
+        </h1>
+        <div
+          class="container grid grid-cols-2 gap-x-6 gap-y-10 mx-auto max-w-2xl px-4 mb-10"
+        >
+          <div>
+            <!-- stake form -->
+            <div class="grid grid-col-1 gap-y-4">
+              <div
+                class="rounded-xl bg-[#181235] mx-auto text-white p-5 w-[350px]"
+              >
+                <p class="text-white text-md">STAKE</p>
+                <p class="text-gray-400 text-sm">Vesting period of 15 days</p>
+                <div>
+                  <form class="mt-4">
+                    <div class="relative">
+                      <img
+                        class="h-10 absolute top-3 left-3"
+                        src="https://docs.celo.org/img/color-logo.png"
+                      />
+                      <input
+                        type="number"
+                        name="stakeAmount"
+                        id="stakeAmount"
+                        placeholder="0.0"
+                        autocomplete="stakeAmount"
+                        class="mt-1 p-4 border border-[#4f4583] bg-[#181235] focus:ring-blue focus:border-blue block w-full shadow-sm sm:text-sm rounded-xl transition duration-500 text-3xl"
+                      />
+                      <!-- <p class="text-sm mt-2 text-yellow">{error}</p> -->
+                    </div>
+                    <div class="text-center mt-5">
+                      <button
+                        type="submit"
+                        id="stakeBtn"
+                        class="text-white text-sm bg-blueDark border border-[#4f4583] hover:bg-[#181235] rounded-full w-32 h-10 text-center transition duration-500"
+                      >
+                        Stake
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- unstake form -->
+            <div class="grid grid-col-1 gap-y-4 mt-6">
+              <div
+                class="rounded-xl bg-[#181235] mx-auto text-white p-5 w-[350px]"
+              >
+                <p class="text-white text-md">UNSTAKE</p>
+                <p class="text-gray-400 text-sm">
+                  Unstaking available 15 days after staking
+                </p>
+                <div>
+                  <form class="mt-4">
+                    <div class="relative">
+                      <img
+                        class="h-10 absolute top-3 left-3"
+                        src="https://docs.celo.org/img/color-logo.png"
+                      />
+                      <input
+                        type="number"
+                        name="unstakeAmount"
+                        id="unstakeAmount"
+                        placeholder="0.0"
+                        autocomplete="unstakeAmount"
+                        class="mt-1 p-4 border border-[#4f4583] bg-[#181235] focus:ring-blue focus:border-blue block w-full shadow-sm sm:text-sm rounded-xl transition duration-500 text-3xl"
+                      />
+                      <!-- <p class="text-sm mt-2 text-yellow">{error}</p> -->
+                    </div>
+                    <div class="text-center mt-5">
+                      <button
+                        type="submit"
+                        id="unstakeBtn"
+                        class="text-white text-sm bg-blueDark border border-[#4f4583] hover:bg-[#181235] rounded-full w-32 h-10 text-center transition duration-500"
+                      >
+                        unstake
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ml-10">
+            <div
+              class="rounded-2xl bg-[#181235] mx-auto text-white p-4 w-[350px]"
+            >
+              <p class="text-lg">Staking parameters</p>
+              <div class="border-b pb-2 border-b-1 border-b-[#4f4583] text-md">
+                <p>
+                  Pool Balance: <span id="poolbalance" class="ml-1">0</span>
+                </p>
+              </div>
+              <div class="pt-4">
+                <p>Claimable<span id="yieldbalance" class="ml-1">0</span></p>
+              </div>
+              <div class="text-center mt-5">
+                <button
+                  type="submit"
+                  id="claim"
+                  class="text-white text-sm bg-[#181235] border-2 border-[#4f4583] hover:bg-blueDark rounded-full w-32 h-10 text-center transition duration-500"
+                >
+                  Claim
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <script type="text/javascript" src="main.js"></script></body>
+</html>

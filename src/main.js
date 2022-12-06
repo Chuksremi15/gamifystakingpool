@@ -5,7 +5,7 @@ import poolAbi from "../contract/pool.abi.json";
 import erc20Abi from "../contract/erc20.abi.json";
 
 const ERC20_DECIMALS = 18;
-const poolAddress = "0x4b4024Fe029776C6773fC67454AB72f94D6b7151";
+const poolAddress = "0xF4b468A3316d6Fe4d1B2d0350166551D58147052";
 const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1";
 
 let kit;
@@ -144,9 +144,8 @@ document.querySelector("#unstakeBtn").addEventListener("click", async (e) => {
     const tx = await contract.methods
       .unstake(params)
       .send({ from: kit.defaultAccount });
-
-    let result = await tx.wait();
   } catch (error) {
+    console.log(error);
     if (!error.status) {
       notification(`⚠️ Unable to unstake`);
       document.getElementById("unstakeAmount").value = "";

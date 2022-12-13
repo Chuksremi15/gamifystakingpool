@@ -4,9 +4,7 @@
 
 ```
 
-This is a staking dapp with functionalities for liquidity providers to provide liquidity
-and this liquid can be used to back bet, trading and other activities that requires
-liquidity.
+This is a staking dapp with functionalities for staking and stakers get rewarded by the transaction fees generated from interating with the pool.
 
 ```
 
@@ -18,8 +16,8 @@ Liquidity providers are rewarded by transaction fees tasked to users interating 
 
 ```
 
-Vesting period for liquidity providers is 15 days i.e withdrawal of liquidity
-provided will be available 15 days after the time of staking.
+Vesting period for liquidity providers is 30 seconds but i.e withdrawal of liquidity
+provided will be available 30 seconds after the time of staking.
 
 ```
 
